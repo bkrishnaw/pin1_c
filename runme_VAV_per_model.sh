@@ -4,7 +4,8 @@ module load gromacs/2021.2
 
 # Generates new inputs
 # For NOW we will a topology usig AMBER99 and TIP3P
-echo -e "4\n1\nq" | gmx pdb2gmx -f {MODEL_PDB} -o pin1.gro -p pin1.top -i pin1.itp -n pin1.ndx -ignh
+# Also - we KNOW that all 4 HIS residues are HID (delta hydrogen -- with atom name HD1)
+echo -e "4\n1\n0\n0\n0\n0\nq" | gmx pdb2gmx -f {MODEL_PDB} -o pin1.gro -p pin1.top -i pin1.itp -n pin1.ndx -his -ignh
 # on owlsnest: 4 (for AMBFER ff99b) and 1 (for TIP3P)
 
 # THEN, we need to edit the pin1.top file with the #include 
@@ -29,34 +30,5 @@ echo -e "13\nq" | gmx genion -s ion.tpr -o pin1_ions.gro -p pin1.top -pname NA -
 
 # Energy minimization (make a tpr using grommp)
 gmx grompp -f em.mdp -c pin1_ions.gro -p pin1.top -o em_large_box.tpr
-
-################################################
-
-# Submit a job to owlsnest 
-qsub em.qsub
-
-# NVT equilibration (make tpr)
-gmx grompp -f nvt.mdp -c em.gro -p pin1.top -o nvt.tpr
-
-# Submit a job to owlsnest 
-qsub nvt.qsub
-
-# Check if it is truly equilibrated 
-echo -e "16\n0\nq" | gmx energy -f nvt.edr -o temperature.xvg
-# 16, then 0; if there is a large drift, redo.
-
-# NPT equilibration (make tpr)
-gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -t nvt.cpt -p pin1.top -o npt.tpr
-
-# Submit job to owlsnest 
-qsub npt.qsub
-
-# Check if it's equilibrated; remember to select 18 and 0
-echo -e "18\n0\nq" | gmx genion -s ion.tpr -o pin1_ions.gro -p pin1.top -pname NA -nname CL -neutral
-# Check if there is a large drift; if there is, redo. 
-
-# Production run (make tpr)
-gmx grompp -f prod.mdp -c npt.gro -t npt.cpt -p pin1.top -o prod_large_box.tpr
-# Check log file 
 
 ~  
