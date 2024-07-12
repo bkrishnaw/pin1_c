@@ -35,10 +35,18 @@ for i in range(1,nmodels+1):
     fout.write(text)
     fout.close()
 
+    # make this file executable
+    os.system(f'chmod +x {outfile}')
+
     print(f'Wrote: {outfile}')
 
+    # copy all relevant mdp files
+    mdp_files = ['em.mdp', 'ion.mdp', 'npt.mdp', 'nvt.mdp']
+    for mdp_file in mdp_files:
+        os.system(f'cp {mdp_file} {outdir}')
 
-
+    # copy the AMBER ff99sb-ildn-nmr1 force field
+    os.system(f'cp -r amber99sbnmr1-ildn.ff {outdir}')
 
 
  
